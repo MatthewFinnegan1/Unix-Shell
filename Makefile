@@ -11,7 +11,7 @@ DEBUG = -DDEBUGMODE
 
 IDIR = include
 CC = g++
-CFLAGS = -I$(IDIR) -Wall $(DEBUG) -Wextra -g -pthread
+CFLAGS = -I$(IDIR) -Wall $(DEBUG) -Wextra -g -pthread -std=c++17
 ODIR = obj
 SDIR = src
 LDIR = lib
@@ -28,7 +28,7 @@ $(ODIR)/%.o: $(SDIR)/%.cpp $(DEPS)
 $(ODIR)/%.o: $(TDIR)/%.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-all: $(APPBIN) $(TESTBIN) submission
+all: $(APPBIN) $(TESTBIN)
 
 $(APPBIN): $(OBJ) $(MOBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
@@ -36,9 +36,6 @@ $(APPBIN): $(OBJ) $(MOBJ)
 $(TESTBIN): $(TOBJ) $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(XXLIBS)
 
-submission:
-	find . -name "*~" -exec rm -rf {} \;
-	zip -r submission.zip .
 
 
 .PHONY: clean

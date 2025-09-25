@@ -85,6 +85,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
 
     /*------------DELIMITER IS [SEMI COLON]--------------*/
     if (*pCurrentDelimiter == ';'){
+      
       if (currProcess->tok_index == 0 && token == nullptr) {
         fprintf(stderr, "syntax error: empty command between ';'\n");
         return;

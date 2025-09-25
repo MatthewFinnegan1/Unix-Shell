@@ -10,6 +10,7 @@
 #include "parser.h"
 
 using namespace std;
+
 void test_pipe_missing_side();
 void test_add_token();
 void test_parser();
@@ -19,7 +20,7 @@ void test_semicolon_with_spaces();
 void test_trailing_and_leading_spaces();
 void test_three_stage_pipeline();
 
-int main(int argc, char **argv) {
+int main() {
   test_pipe_missing_side();
   test_single_command_no_args();
   test_empty_input();

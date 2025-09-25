@@ -93,7 +93,6 @@ bool pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
  * @return boolean value indicating syscall success or failure
  */
 bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
-
   int fd[2];
   if(pipe(fd) < 0){
     perror("pipe");
@@ -105,7 +104,6 @@ bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     perror("fork");
     return false;
   }
-
   /* CHILD*/
   if (pid == 0){   
     dup2(prev_proc->pipe_fd[0], 0); // dup read of parent (output of prior proc) to stdin
@@ -117,7 +115,6 @@ bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
   
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
-
   /* PARENT */
   pids[pid_index++] = pid;
   close(fd[1]);
@@ -130,15 +127,14 @@ bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
  * @brief
  * Helper function to print the PS1 pormpt.
  */
-void display_prompt() { cout << "$ " << flush; }
+void display_prompt() { cout << "Finnegan_Shell$ " << flush; }
 
 /**
  * @brief Cleans up allocated resources to prevent memory leaks
  */
-void cleanup(list<Process *> &process_list, char *input_line)
-{
-  for (Process *p : process_list)
-  {
+
+void cleanup(list<Process *> &process_list, char *input_line){
+  for (Process *p : process_list){
     for(char* token : p->cmdTokens){
       delete[] token;
     }

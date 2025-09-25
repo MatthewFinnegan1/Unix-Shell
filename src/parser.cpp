@@ -71,7 +71,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
   char *pCurrentDelimiter;
   char *start = cmd;
 
-  while (pCurrentDelimiter = strpbrk(start, delimiters)){
+  while ((pCurrentDelimiter = strpbrk(start, delimiters))){
     /*-----------------------------CREATE TOKEN-------------------------------*/
     char *token;
     if (!createToken(token, start, pCurrentDelimiter)){

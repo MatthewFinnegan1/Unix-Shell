@@ -36,8 +36,7 @@ bool createToken(char *&token, char *&start, char *delimiter){
 char *read_input(){
   char *input = NULL;
   char tempbuf[MAX_LINE];
-  size_t inputlen = 0, templen = 0;
-
+  size_t inputlen = 0, templen = 0; 
   do{
     char *a = fgets(tempbuf, MAX_LINE, stdin);
     if (a == nullptr){
@@ -94,22 +93,11 @@ void parse_input(char *cmd, list<Process *> &process_list){
       if (token){
         currProcess->add_token(token);
       }
+      // redirect the I/O if necessary then push process without a pipe out
       currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
       currProcess = new Process(0, 0);
       
-    }
-
-    /*------------DELIMITER IS [&] (Background)--------------*/
-    if (*pCurrentDelimiter == '&'){
-      if (token){
-        currProcess->add_token(token);
-      }
-
-      currProcess->is_background = true;
-      currProcess->extract_redirection_tokens();
-      process_list.push_back(currProcess);
-      currProcess = new Process(0, 0); 
     }
 
     /*---------------DELIMITER IS [PIPE]------------------*/
@@ -122,35 +110,49 @@ void parse_input(char *cmd, list<Process *> &process_list){
       if (token){
         currProcess->add_token(token);
       }
-
+      // redirect the I/O if necessary then push process with a pipe to next process
       currProcess->pipe_out = 1;
       currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
       currProcess = new Process(1, 0);
     }
 
-    /*---------------DELIMITER IS [<] or [>]------------------*/
-    if (*pCurrentDelimiter == '<' || (*pCurrentDelimiter == '>' && *(1 + pCurrentDelimiter) != '>')){
-        if (token) {
-            currProcess->add_token(token);
-        }
-        // Add the symbol itself as a distinct token -- will remove later
-        char* sym = new char[2];
-        sym[0] = *pCurrentDelimiter;
-        sym[1] = '\0';
-        currProcess->add_token(sym);
+    /*------------DELIMITER IS [&] (Background Process)--------------*/
+    if (*pCurrentDelimiter == '&'){
+      if (token){
+        currProcess->add_token(token);
+      }
+
+      currProcess->is_background = true;
+      currProcess->extract_redirection_tokens();
+      process_list.push_back(currProcess);
+      currProcess = new Process(0, 0); 
     }
+
+    /*---------------DELIMITER IS [<] or [>]------------------*/
+    // for right arrow check subsequent pointer to differentiate [>] & [>>]
+    // I/O delimiters are handled as tokens as well.
+    if (*pCurrentDelimiter == '<' || (*pCurrentDelimiter == '>' && *(1 + pCurrentDelimiter) != '>')){
+      if (token) {
+        currProcess->add_token(token);
+      }
+      char* sym = new char[2];
+      sym[0] = *pCurrentDelimiter;
+      sym[1] = '\0';
+      currProcess->add_token(sym);
+    }
+    /*---------------DELIMITER IS [>>]------------------*/
     if (*pCurrentDelimiter == '>' && *(1 + pCurrentDelimiter) == '>') {
-        if (token) {
-          currProcess->add_token(token);
-        }
-        // Add the symbol itself as a distinct token -- will remove later
-        char* sym = new char[3]; 
-        sym[0] = '>';
-        sym[1] = '>';
-        sym[2] = '\0';
-        currProcess->add_token(sym);
-        start++;
+      if (token) {
+        currProcess->add_token(token);
+      }
+      char* sym = new char[3]; 
+      sym[0] = '>';
+      sym[1] = '>';
+      sym[2] = '\0';
+      currProcess->add_token(sym);
+      //iterate the start pointer to avoid looping over 2nd '>'
+      start++;
     }
   }
   /*----------------POST LOOP----------------*/

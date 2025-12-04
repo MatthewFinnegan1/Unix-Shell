@@ -27,6 +27,10 @@ void Process::add_token(char *tok){
   this->cmdTokens[this->tok_index] = nullptr;
 }
 
+
+/**
+ * @brief extracts I/O redirection tokens and sets process bool flags for later execution
+ */
 void Process::extract_redirection_tokens(){
   int i = 0;
   while (cmdTokens[i] != nullptr) {

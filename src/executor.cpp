@@ -10,34 +10,40 @@ void handle_sigchld(int sig) {
     
   }
 }
+/**
+ * @brief Helper function handle file input redirection and append/truncate cases
+ * for file output redirection
+ */
 void handle_io_redirection(Process* p) {
-    if (p->infile) {
-        int fd = open(p->infile, O_RDONLY);
-        if (fd < 0) {
-            perror("input redirection failed");
-            exit(1);
-        }
-        dup2(fd, 0); 
-        close(fd);
+  if (p->infile) {
+    int fd = open(p->infile, O_RDONLY);
+    if (fd < 0) {
+      perror("input redirection failed");
+      exit(1);
     }
-    if (p->outfile) {
-      int fd;
-      if(p->is_stream_extraction == false){
-        fd = open(p->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      }else{
-        fd = open(p->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    dup2(fd, 0); 
+    close(fd);
+  }
+  if (p->outfile) {
+    int fd;
+    if(p->is_stream_extraction == false){
+      // overwrite file for '>' operator
+      fd = open(p->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    }else{
+      // append to file for '>>' operator
+      fd = open(p->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    }
+      if (fd < 0) {
+        perror("output redirection failed");
+        exit(1);
       }
-        if (fd < 0) {
-            perror("output redirection failed");
-            exit(1);
-        }
-        dup2(fd, 1); 
-        close(fd);
+      dup2(fd, 1); 
+      close(fd);
     }
 }
 /**
  * @brief Helper function to run command when pipe_in = 0, pipe_out = 0
- * @return boolean value indicating syscall success or failure
+ * @return pid value for background process evaluation
  */
 pid_t pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
   pid_t pid = fork();
@@ -61,7 +67,7 @@ pid_t pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
 
 /**
  * @brief Helper function to run command when pipe_in = 0, pipe_out = 1
- * @return boolean value indicating syscall success or failure
+ * @return pid value for background process evaluation
  */
 pid_t pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   int fd[2];
@@ -93,7 +99,7 @@ pid_t pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids
 
 /**
  * @brief Helper function to run command when pipe_in = 1, pipe_out = 0
- * @return boolean value indicating syscall success or failure
+ * @return pid value for background process evaluation
  */
 pid_t pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   pid_t pid = fork();
@@ -118,7 +124,7 @@ pid_t pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids
 
 /**
  * @brief Helper function to run command when pipe_in = 1, pipe_out = 1
- * @return boolean value indicating syscall success or failure
+ * @return pid value for background process evaluation
  */
 pid_t pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   int fd[2];
@@ -155,7 +161,7 @@ pid_t pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids
  * @brief
  * Helper function to print the PS1 pormpt.
  */
-void display_prompt() { cout << "Finnegan_Shell$ " << flush; }
+void display_prompt() { cout << "Non-Trivial-Shell$ " << flush; }
 
 /**
  * @brief Cleans up allocated resources to prevent memory leaks

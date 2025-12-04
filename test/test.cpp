@@ -20,6 +20,11 @@ void test_semicolon_with_spaces();
 void test_trailing_and_leading_spaces();
 void test_three_stage_pipeline();
 
+void test_output_redirection();
+void test_append_redirection();
+void test_input_redirection();
+void test_background_execution();
+
 int main() {
   test_pipe_missing_side();
   test_single_command_no_args();
@@ -29,6 +34,10 @@ int main() {
   test_three_stage_pipeline();
   test_add_token();
   test_parser();
+  test_output_redirection();
+  test_append_redirection();
+  test_input_redirection();
+  test_background_execution();
 }
 void test_pipe_missing_side() {
   {
@@ -215,5 +224,95 @@ void test_parser(){
   std::cout << "parse_input works!\n";
   std::cout << p1->cmdTokens[0] << " " << p1->cmdTokens[1] << " " << p2->cmdTokens[0] << " " << p2->cmdTokens[1] << " " << p3->cmdTokens[0] << " " << p3->cmdTokens[1] << endl;
 
+  for (auto proc : processes) delete proc;
+}
+
+void test_output_redirection() {
+  std::list<Process*> processes;
+  char input[] = "ls -l > output.txt";
+  parse_input(input, processes);
+
+  assert(processes.size() == 1);
+  auto it = processes.begin();
+  Process* p = *it;
+
+  // verify tokens are extracted
+  assert(strcmp(p->cmdTokens[0], "ls") == 0);
+  assert(strcmp(p->cmdTokens[1], "-l") == 0);
+  assert(p->cmdTokens[2] == nullptr); 
+
+  // check that outfile is set
+  assert(p->outfile != nullptr);
+  assert(strcmp(p->outfile, "output.txt") == 0);
+  
+  // make sure that it is not in append mode
+  assert(p->is_stream_extraction == false);
+
+  std::cout << "output_redirection (>) works!\n";
+  for (auto proc : processes) delete proc;
+}
+
+void test_append_redirection() {
+  std::list<Process*> processes;
+  char input[] = "echo line >> output.txt";
+  parse_input(input, processes);
+
+  assert(processes.size() == 1);
+  auto it = processes.begin();
+  Process* p = *it;
+
+  //check tokens
+  assert(strcmp(p->cmdTokens[0], "echo") == 0);
+  assert(strcmp(p->cmdTokens[1], "line") == 0);
+  
+  //check outfile
+  assert(p->outfile != nullptr);
+  assert(strcmp(p->outfile, "output.txt") == 0);
+  
+  // check append flag
+  assert(p->is_stream_extraction == true);
+
+  std::cout << "append_redirection (>>) works!\n";
+  for (auto proc : processes) delete proc;
+}
+
+void test_input_redirection() {
+  std::list<Process*> processes;
+  char input[] = "sort < unsorted_names.txt";
+  parse_input(input, processes);
+
+  assert(processes.size() == 1);
+  auto it = processes.begin();
+  Process* p = *it;
+
+  // check tokens
+  assert(strcmp(p->cmdTokens[0], "sort") == 0);
+  assert(p->cmdTokens[1] == nullptr);
+
+  // check infile
+  assert(p->infile != nullptr);
+  assert(strcmp(p->infile, "unsorted_names.txt") == 0);
+
+  std::cout << "input_redirection (<) works!\n";
+  for (auto proc : processes) delete proc;
+}
+
+void test_background_execution() {
+  std::list<Process*> processes;
+  char input[] = "sleep 5 &";
+  parse_input(input, processes);
+
+  assert(processes.size() == 1);
+  auto it = processes.begin();
+  Process* p = *it;
+
+  // check tokens
+  assert(strcmp(p->cmdTokens[0], "sleep") == 0);
+  assert(strcmp(p->cmdTokens[1], "5") == 0);
+
+  // check backgorund flag
+  assert(p->is_background == true);
+
+  std::cout << "background_execution (&) works!\n";
   for (auto proc : processes) delete proc;
 }

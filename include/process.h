@@ -6,6 +6,7 @@ class Process {
   Process(bool _pipe_in_flag, bool _pipe_out_flag);
 
   void add_token(char *tok);
+  void extract_redirection_tokens();
   char *cmdTokens[25];
 
   bool pipe_in;
@@ -13,6 +14,9 @@ class Process {
 
   int pipe_fd[2];
   int tok_index;
+
+  char* infile = nullptr;
+  char* outfile = nullptr;
 };
 
 #endif

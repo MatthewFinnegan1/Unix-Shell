@@ -1,5 +1,6 @@
 #include "process.h"
 #include "parser.h"
+#include <string.h>
 /**
  * @brief Constructor for Process class.
  */
@@ -24,4 +25,42 @@ void Process::add_token(char *tok){
   }
   this->cmdTokens[this->tok_index++] = tok;
   this->cmdTokens[this->tok_index] = nullptr;
+}
+
+void Process::extract_redirection_tokens(){
+  int i = 0;
+  while (cmdTokens[i] != nullptr) {
+        if (strcmp(cmdTokens[i], "<") == 0) {
+            // Next token is the filename
+            if (cmdTokens[i+1] != nullptr) {
+                infile = strdup(cmdTokens[i+1]); 
+                
+                // Remove both < and filename from list by shifting everything left
+                int j = i;
+                while (cmdTokens[j+2] != nullptr) {
+                    cmdTokens[j] = cmdTokens[j+2];
+                    j++;
+                }
+                cmdTokens[j] = nullptr; 
+                cmdTokens[j+1] = nullptr;
+                continue; 
+            }
+        }
+        else if (strcmp(cmdTokens[i], ">") == 0) {
+            if (cmdTokens[i+1] != nullptr) {
+                outfile = strdup(cmdTokens[i+1]); 
+                
+                // Remove both > and filename from list
+                int j = i;
+                while (cmdTokens[j+2] != nullptr) {
+                    cmdTokens[j] = cmdTokens[j+2];
+                    j++;
+                }
+                cmdTokens[j] = nullptr;
+                cmdTokens[j+1] = nullptr;
+                continue;
+            }
+        }
+        i++;
+    }
 }

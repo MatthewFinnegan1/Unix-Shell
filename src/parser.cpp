@@ -67,7 +67,7 @@ void sanitize(char *cmd){
  */
 void parse_input(char *cmd, list<Process *> &process_list){
   Process *currProcess = new Process(0, 0);
-  const char *delimiters = "|; ";
+  const char *delimiters = "|; <>\t";
   char *pCurrentDelimiter;
   char *start = cmd;
 
@@ -94,7 +94,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
       if (token){
         currProcess->add_token(token);
       }
-
+      currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
       currProcess = new Process(0, 0);
       
@@ -112,8 +112,21 @@ void parse_input(char *cmd, list<Process *> &process_list){
       }
 
       currProcess->pipe_out = 1;
+      currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
       currProcess = new Process(1, 0);
+    }
+
+    /*---------------DELIMITER IS [<] or [>]------------------*/
+    if (*pCurrentDelimiter == '<' || *pCurrentDelimiter == '>'){
+        if (token) {
+            currProcess->add_token(token);
+        }
+        // Add the symbol itself as a distinct token -- will remove later
+        char* sym = new char[2];
+        sym[0] = *pCurrentDelimiter;
+        sym[1] = '\0';
+        currProcess->add_token(sym);
     }
   }
   /*----------------POST LOOP----------------*/
@@ -127,6 +140,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
       token[len] = '\0';
 
       currProcess->add_token(token);
+      currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
     }else{
       //Check for trailing pipe
@@ -135,6 +149,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
         return;
       }
       if (currProcess->tok_index > 0) {
+        currProcess->extract_redirection_tokens();
         process_list.push_back(currProcess);
       }
     }
@@ -146,6 +161,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
       return;
     }
     if (currProcess->tok_index > 0) {
+      currProcess->extract_redirection_tokens();
       process_list.push_back(currProcess);
     }
   }

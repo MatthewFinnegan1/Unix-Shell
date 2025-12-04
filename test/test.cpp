@@ -37,7 +37,7 @@ void test_pipe_missing_side() {
     char input[] = "| grep foo";
     parse_input(input, processes);
 
-    // Expect: no valid processes created
+    
     assert(processes.size() == 0);
 
     std::cout << "pipe with no left-hand command handled!\n";
@@ -50,16 +50,15 @@ void test_pipe_missing_side() {
     char input[] = "echo foo |";
     parse_input(input, processes);
 
-    // Expect: left side (echo foo) parsed, but no right-hand process
+    
     assert(processes.size() == 1);
     auto it = processes.begin();
     Process* p1 = *it;
 
     assert(strcmp(p1->cmdTokens[0], "echo") == 0);
     assert(strcmp(p1->cmdTokens[1], "foo") == 0);
-    assert(p1->pipe_out == true);   // still marked as piping out
-    // but no valid next process to receive it
-
+    assert(p1->pipe_out == true);   
+    
     std::cout << "pipe with no right-hand command handled (with leftover left side)!\n";
     for (auto proc : processes) delete proc;
   }
@@ -85,10 +84,10 @@ void test_single_command_no_args() {
 
 void test_empty_input() {
   std::list<Process*> processes;
-  char input[] = "";  // empty line
+  char input[] = ""; 
   parse_input(input, processes);
 
-  // Depending on your parser, this should yield 0 processes.
+  
   assert(processes.size() == 0);
 
   std::cout << "empty_input works!\n";
@@ -184,7 +183,7 @@ void test_add_token(){
 
   assert(strcmp(p.cmdTokens[0], "ls") == 0);
   assert(strcmp(p.cmdTokens[1], "-l") == 0);
-  assert(p.cmdTokens[2] == nullptr); // should be NULL terminated
+  assert(p.cmdTokens[2] == nullptr); 
 
   std::cout << "add_token works!\n";
 }

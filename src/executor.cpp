@@ -2,10 +2,29 @@
 #include "process.h"
 #include "parser.h"
 #include <iostream>
-
+#include <fcntl.h>
 using namespace std;
 
-
+void handle_io_redirection(Process* p) {
+    if (p->infile) {
+        int fd = open(p->infile, O_RDONLY);
+        if (fd < 0) {
+            perror("input redirection failed");
+            exit(1);
+        }
+        dup2(fd, 0); 
+        close(fd);
+    }
+    if (p->outfile) {
+        int fd = open(p->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (fd < 0) {
+            perror("output redirection failed");
+            exit(1);
+        }
+        dup2(fd, 1); 
+        close(fd);
+    }
+}
 /**
  * @brief Helper function to run command when pipe_in = 0, pipe_out = 0
  * @return boolean value indicating syscall success or failure
@@ -18,6 +37,7 @@ bool pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
   }
   /*-------CHILD--------*/
   if (pid == 0){
+    handle_io_redirection(curr_proc);
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /*-------PARENT--------*/
@@ -52,6 +72,7 @@ bool pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     close(fd[0]); //close read
     dup2(fd[1], 1); // dup write to stdout
     close(fd[1]); //close write
+    handle_io_redirection(curr_proc);
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /* PARENT */
@@ -78,6 +99,7 @@ bool pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
   if (pid == 0){   
     dup2(prev_proc->pipe_fd[0], 0); // dup read of parent (output of prior proc) to stdin
     close(prev_proc->pipe_fd[0]); //close write
+    handle_io_redirection(curr_proc);
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   pids[pid_index++] = pid;
@@ -112,7 +134,8 @@ bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     close(fd[0]); //close read
     dup2(fd[1], 1); // dup write to stdout
     close(fd[1]); //close write
-  
+    
+    handle_io_redirection(curr_proc);
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /* PARENT */

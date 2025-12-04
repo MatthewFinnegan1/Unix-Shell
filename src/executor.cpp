@@ -16,7 +16,12 @@ void handle_io_redirection(Process* p) {
         close(fd);
     }
     if (p->outfile) {
-        int fd = open(p->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      int fd;
+      if(p->is_stream_extraction == false){
+        fd = open(p->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      }else{
+        fd = open(p->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+      }
         if (fd < 0) {
             perror("output redirection failed");
             exit(1);

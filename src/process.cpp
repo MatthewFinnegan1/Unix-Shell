@@ -46,7 +46,10 @@ void Process::extract_redirection_tokens(){
                 continue; 
             }
         }
-        else if (strcmp(cmdTokens[i], ">") == 0) {
+        else if ((strcmp(cmdTokens[i], ">") == 0) || (strcmp(cmdTokens[i], ">>") == 0)) {
+            if(strcmp(cmdTokens[i], ">>") == 0){
+              is_stream_extraction = true;
+            }
             if (cmdTokens[i+1] != nullptr) {
                 outfile = strdup(cmdTokens[i+1]); 
                 

@@ -17,6 +17,8 @@ class Process {
 
   char* infile = nullptr;
   char* outfile = nullptr;
+
+  bool is_stream_extraction = false;
 };
 
 #endif

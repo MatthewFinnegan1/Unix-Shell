@@ -118,7 +118,7 @@ void parse_input(char *cmd, list<Process *> &process_list){
     }
 
     /*---------------DELIMITER IS [<] or [>]------------------*/
-    if (*pCurrentDelimiter == '<' || *pCurrentDelimiter == '>'){
+    if (*pCurrentDelimiter == '<' || (*pCurrentDelimiter == '>' && *(1 + pCurrentDelimiter) != '>')){
         if (token) {
             currProcess->add_token(token);
         }
@@ -127,6 +127,15 @@ void parse_input(char *cmd, list<Process *> &process_list){
         sym[0] = *pCurrentDelimiter;
         sym[1] = '\0';
         currProcess->add_token(sym);
+    }
+    if (*pCurrentDelimiter == '>' && *(1 + pCurrentDelimiter) == '>') {
+        if (token) {
+          currProcess->add_token(token);
+        }
+        // Add the symbol itself as a distinct token -- will remove later
+        char* sym = ">>\0";
+        currProcess->add_token(sym);
+        start++;
     }
   }
   /*----------------POST LOOP----------------*/

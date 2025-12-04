@@ -5,6 +5,11 @@
 #include <fcntl.h>
 using namespace std;
 
+void handle_sigchld(int sig) {
+  while (waitpid(-1, NULL, WNOHANG) > 0) {
+    
+  }
+}
 void handle_io_redirection(Process* p) {
     if (p->infile) {
         int fd = open(p->infile, O_RDONLY);
@@ -177,6 +182,8 @@ void run(){
   list<Process *> process_list;
   char *input_line;
   bool is_quit = false;
+
+  signal(SIGCHLD, handle_sigchld);
 
   for(;;){
     display_prompt();

@@ -145,7 +145,10 @@ void parse_input(char *cmd, list<Process *> &process_list){
           currProcess->add_token(token);
         }
         // Add the symbol itself as a distinct token -- will remove later
-        char* sym = ">>\0";
+        char* sym = new char[3]; 
+        sym[0] = '>';
+        sym[1] = '>';
+        sym[2] = '\0';
         currProcess->add_token(sym);
         start++;
     }

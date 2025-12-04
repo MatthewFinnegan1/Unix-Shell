@@ -34,11 +34,11 @@ void handle_io_redirection(Process* p) {
  * @brief Helper function to run command when pipe_in = 0, pipe_out = 0
  * @return boolean value indicating syscall success or failure
  */
-bool pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
+pid_t pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
   pid_t pid = fork();
   if (pid < 0){
     perror("fork");
-    return false;
+    return -1;
   }
   /*-------CHILD--------*/
   if (pid == 0){
@@ -46,31 +46,29 @@ bool pipe00(Process* curr_proc, Process*& prev_proc, int& pid_index){
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /*-------PARENT--------*/
-  waitpid(pid, NULL, 0); //wait for child
 
   prev_proc = curr_proc;
   prev_proc->pipe_fd[0] = -1; //no pipes created yet
   prev_proc->pipe_fd[1] = -1;
-  pid_index = 0;
 
-  return true;
+  return pid;
 }
 
 /**
  * @brief Helper function to run command when pipe_in = 0, pipe_out = 1
  * @return boolean value indicating syscall success or failure
  */
-bool pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
+pid_t pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   int fd[2];
   if(pipe(fd) < 0){
     perror("pipe");
-    return false;
+    return -1;
   }
 
   pid_t pid = fork();
   if (pid < 0){
     perror("fork");
-    return false;
+    return -1;
   }
   /* CHILD */
   if (pid == 0){
@@ -81,23 +79,22 @@ bool pipe01(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /* PARENT */
-  pids[pid_index++] = pid;
   close(fd[1]);
 
   prev_proc = curr_proc;
   prev_proc->pipe_fd[0] = fd[0]; //gonna want to dup2 this to stdin on pipe10
-  return true;
+  return pid;
 }
 
 /**
  * @brief Helper function to run command when pipe_in = 1, pipe_out = 0
  * @return boolean value indicating syscall success or failure
  */
-bool pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
+pid_t pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   pid_t pid = fork();
   if (pid < 0){
     perror("fork");
-    return false;
+    return -1;
   }
   
   /* CHILD */
@@ -107,29 +104,28 @@ bool pipe10(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     handle_io_redirection(curr_proc);
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
-  pids[pid_index++] = pid;
   /* PARENT */
   close(prev_proc->pipe_fd[0]);
   prev_proc->pipe_fd[0] = -1;
   prev_proc = curr_proc;
-  return true;
+  return pid;
 }
 
 /**
  * @brief Helper function to run command when pipe_in = 1, pipe_out = 1
  * @return boolean value indicating syscall success or failure
  */
-bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
+pid_t pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[]){
   int fd[2];
   if(pipe(fd) < 0){
     perror("pipe");
-    return false;
+    return -1;
   }
 
   pid_t pid = fork();
   if (pid < 0){
     perror("fork");
-    return false;
+    return -1;
   }
   /* CHILD*/
   if (pid == 0){   
@@ -144,12 +140,11 @@ bool pipe11(Process* curr_proc, Process*& prev_proc, int& pid_index, pid_t pids[
     execvp(curr_proc->cmdTokens[0], curr_proc->cmdTokens);
   }
   /* PARENT */
-  pids[pid_index++] = pid;
   close(fd[1]);
 
   prev_proc = curr_proc;
   prev_proc->pipe_fd[0] = fd[0];
-
+  return pid;
 }
 /**
  * @brief
@@ -207,7 +202,6 @@ void run(){
 bool run_commands(list<Process *> &command_list){
   bool is_quit = false;
   int pid_index = 0;
-  int prev_read_fd = -1;
   int size = command_list.size();
   pid_t pids[size];
   Process *prev = nullptr;
@@ -217,14 +211,24 @@ bool run_commands(list<Process *> &command_list){
       return true;
     }
 
+    pid_t child_pid = -1;
+
     if (p->pipe_in == 0 && p->pipe_out == 0){
-      pipe00(p, prev, pid_index);
+      child_pid = pipe00(p, prev, pid_index);
     }else if(p->pipe_in == 0 && p->pipe_out == 1){
-      pipe01(p, prev, pid_index, pids);
+      child_pid = pipe01(p, prev, pid_index, pids);
     }else if(p->pipe_in == 1 && p->pipe_out == 0){
-      pipe10(p, prev, pid_index, pids);
+      child_pid = pipe10(p, prev, pid_index, pids);
     }else{
-      pipe11(p, prev, pid_index, pids);
+      child_pid = pipe11(p, prev, pid_index, pids);
+    }
+
+    if(child_pid > 0){
+      if(p->is_background){
+        std::cout << "[" << child_pid << "]" << std::endl;
+      }else{
+        pids[pid_index++] = child_pid;
+      }
     }
   }
   /* Reap children */

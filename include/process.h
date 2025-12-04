@@ -19,6 +19,7 @@ class Process {
   char* outfile = nullptr;
 
   bool is_stream_extraction = false;
+  bool is_background = false;
 };
 
 #endif
